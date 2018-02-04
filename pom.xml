@@ -18,8 +18,8 @@
                 <version>2.5.1</version>
                 <inherited>true</inherited>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>${maven-compiler-plugin.source}</source>
+                    <target>${maven-compiler-plugin.source}</target>
                 </configuration>
             </plugin>
         </plugins>
@@ -50,9 +50,49 @@
             <artifactId>jersey-media-moxy</artifactId>
         </dependency>
         -->
+
+        <!-- https://mvnrepository.com/artifact/org.glassfish.jersey.media/jersey-media-multipart -->
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-multipart</artifactId>
+            <version>${jersey-media-multipart.version}</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/javax.validation/validation-api -->
+        <dependency>
+            <groupId>javax.validation</groupId>
+            <artifactId>validation-api</artifactId>
+            <version>${validation-api.version}</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-annotations -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>2.9.4</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/io.swagger/swagger-annotations -->
+        <dependency>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-annotations</artifactId>
+            <version>1.5.18</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/io.swagger/swagger-jaxrs -->
+        <dependency>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-jaxrs</artifactId>
+            <version>1.5.18</version>
+        </dependency>
+
+
     </dependencies>
     <properties>
         <jersey.version>2.16</jersey.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven-compiler-plugin.source>1.8</maven-compiler-plugin.source>
+        <jersey-media-multipart.version>2.26</jersey-media-multipart.version>
+        <validation-api.version>2.0.1.Final</validation-api.version>
     </properties>
 </project>
