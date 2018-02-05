@@ -15,10 +15,7 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 
 public class DatabaseExchange {
     /**
@@ -208,6 +205,24 @@ public class DatabaseExchange {
     }
 
     private String processJsonRequestDb(int requestNum, String jsonRequest, String methodName) {
+        initDataSource();
+        String procedureName = getProcedureName(methodName);
+        String sql = "{call " + procedureName + "(?,?)}";
+        try {
+            CallableStatement cstmt = dataSource.getConnection().prepareCall(sql);
+
+            Clob jsonRequestClob = dataSource.getConnection().createClob();
+            jsonRequestClob.setString(1, jsonRequest);
+            cstmt.setClob(REST_API_JSON_REQUEST, jsonRequestClob);
+            cstmt.registerOutParameter(REST_API_JSON_RESPONSE, Types.CLOB);
+
+            cstmt.execute();
+
+            Clob result = cstmt.getClob(REST_API_JSON_RESPONSE);
+            return result.getSubString(1, (int) result.length());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
         return null;
     }
