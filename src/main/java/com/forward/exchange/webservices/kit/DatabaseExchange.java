@@ -1,4 +1,4 @@
-package com.fwt.kit;
+package com.forward.exchange.webservices.kit;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

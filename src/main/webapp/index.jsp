@@ -1,7 +1,7 @@
 <html>
 <body>
     <h2>Jersey RESTful Web Application!</h2>
-    <p><a href="webapi/myresource">Jersey resource</a>
+    <%--<p><a href="webapi/myresource">Jersey resource</a>--%>
     <p><a href="webapi/newapi/CreateRequest">CreateRequest GET</a>
     <p><a href="http://localhost:8080/TestWSWebApp/webapi/application.wadl">WADL</a>
     <hr/>

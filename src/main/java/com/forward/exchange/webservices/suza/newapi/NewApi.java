@@ -1,16 +1,15 @@
-package com.fwt.suza.newapi;
+package com.forward.exchange.webservices.suza.newapi;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fwt.suza.model.CreateRequest;
-import com.fwt.suza.model.CreateRequestResponse;
+import com.forward.exchange.webservices.suza.model.CreateRequest;
+import com.forward.exchange.webservices.suza.model.CreateRequestResponse;
 import io.swagger.annotations.ApiParam;
 
 import javax.ws.rs.*;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import java.io.DataInput;
 import java.io.IOException;
 
 @Path("newapi")
