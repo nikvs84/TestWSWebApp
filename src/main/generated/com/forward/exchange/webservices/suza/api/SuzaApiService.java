@@ -23,8 +23,8 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.validation.constraints.*;
 
 public abstract class SuzaApiService {
-    public abstract Response createComment(CreateComment createComment,ContainerRequestContext requestContext, com.forward.exchange.webservices.kit.DatabaseExchange baseClass);
-    public abstract Response createRequest(CreateRequest createRequest,ContainerRequestContext requestContext, com.forward.exchange.webservices.kit.DatabaseExchange baseClass);
-    public abstract Response getLastComments(GetLastComments getLastComments,ContainerRequestContext requestContext, com.forward.exchange.webservices.kit.DatabaseExchange baseClass);
-    public abstract Response getRequestComments(GetRequestComments getRequestComments,ContainerRequestContext requestContext, com.forward.exchange.webservices.kit.DatabaseExchange baseClass);
+    public abstract Response createComment(String createComment,ContainerRequestContext requestContext, com.forward.exchange.webservices.kit.DatabaseExchange baseClass);
+    public abstract Response createRequest(String createRequest,ContainerRequestContext requestContext, com.forward.exchange.webservices.kit.DatabaseExchange baseClass);
+    public abstract Response getLastComments(String getLastComments,ContainerRequestContext requestContext, com.forward.exchange.webservices.kit.DatabaseExchange baseClass);
+    public abstract Response getRequestComments(String getRequestComments,ContainerRequestContext requestContext, com.forward.exchange.webservices.kit.DatabaseExchange baseClass);
 }

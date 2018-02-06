@@ -1,48 +1,48 @@
 package com.forward.exchange.webservices.suza.api.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.forward.exchange.webservices.suza.api.*;
-import com.forward.exchange.webservices.suza.model.*;
 
-import com.forward.exchange.webservices.suza.model.CreateComment;
-import com.forward.exchange.webservices.suza.model.CreateCommentResponse;
 import com.forward.exchange.webservices.suza.model.CreateRequest;
-import com.forward.exchange.webservices.suza.model.CreateRequestResponse;
-import com.forward.exchange.webservices.suza.model.GetLastComments;
-import com.forward.exchange.webservices.suza.model.GetLastCommentsResponse;
-import com.forward.exchange.webservices.suza.model.GetRequestComments;
-import com.forward.exchange.webservices.suza.model.GetRequestCommentsResponse;
 
-import java.util.List;
-
-import java.io.InputStream;
-
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import java.io.IOException;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.container.ContainerRequestContext;
-import javax.validation.constraints.*;
 
 public class SuzaApiServiceImpl extends SuzaApiService {
     @Override
-    public Response createComment(CreateComment createComment, ContainerRequestContext requestContext, com.forward.exchange.webservices.kit.DatabaseExchange baseClass) {
+    public Response createComment(String createComment, ContainerRequestContext requestContext, com.forward.exchange.webservices.kit.DatabaseExchange baseClass) {
         // TODO
         //return Response.serverError().entity(new ApiResponseMessage(ApiResponseMessage.ERROR, "Method is not implemented yet!")).build();
         return Response.serverError().entity("Method is not implemented yet!").build();
     }
     @Override
-    public Response createRequest(CreateRequest createRequest, ContainerRequestContext requestContext, com.forward.exchange.webservices.kit.DatabaseExchange baseClass) {
+    public Response createRequest(String createRequest, ContainerRequestContext requestContext, com.forward.exchange.webservices.kit.DatabaseExchange baseClass) {
+        // TODO
+        //return Response.serverError().entity(new ApiResponseMessage(ApiResponseMessage.ERROR, "Method is not implemented yet!")).build();
+        String methodName = "createRequest";
+        try {
+            CreateRequest createRequestObj = new ObjectMapper().readValue(createRequest, CreateRequest.class);
+//            Response response = baseClass.processJsonRequest(createRequestObj, requestContext, methodName);
+//            return response;
+            String resp;
+//            resp = baseClass.testRequestDB();
+            resp = baseClass.testCallProcDB(createRequestObj, methodName);
+            return Response.ok().entity(resp).build();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return Response.serverError().entity("Method is not implemented yet!").build();
+    }
+    @Override
+    public Response getLastComments(String getLastComments, ContainerRequestContext requestContext, com.forward.exchange.webservices.kit.DatabaseExchange baseClass) {
         // TODO
         //return Response.serverError().entity(new ApiResponseMessage(ApiResponseMessage.ERROR, "Method is not implemented yet!")).build();
         return Response.serverError().entity("Method is not implemented yet!").build();
     }
     @Override
-    public Response getLastComments(GetLastComments getLastComments, ContainerRequestContext requestContext, com.forward.exchange.webservices.kit.DatabaseExchange baseClass) {
-        // TODO
-        //return Response.serverError().entity(new ApiResponseMessage(ApiResponseMessage.ERROR, "Method is not implemented yet!")).build();
-        return Response.serverError().entity("Method is not implemented yet!").build();
-    }
-    @Override
-    public Response getRequestComments(GetRequestComments getRequestComments, ContainerRequestContext requestContext, com.forward.exchange.webservices.kit.DatabaseExchange baseClass) {
+    public Response getRequestComments(String getRequestComments, ContainerRequestContext requestContext, com.forward.exchange.webservices.kit.DatabaseExchange baseClass) {
         // TODO
         //return Response.serverError().entity(new ApiResponseMessage(ApiResponseMessage.ERROR, "Method is not implemented yet!")).build();
         return Response.serverError().entity("Method is not implemented yet!").build();

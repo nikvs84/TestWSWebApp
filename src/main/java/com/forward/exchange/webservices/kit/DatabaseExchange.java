@@ -16,8 +16,11 @@ import javax.ws.rs.core.Response;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.sql.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class DatabaseExchange {
+    private static final AtomicInteger requestNumber = new AtomicInteger(0);
+
     /**
      * Кодировка в UTF-8
      */
@@ -43,6 +46,10 @@ public class DatabaseExchange {
     private DataSource dataSource;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseExchange.class);
+
+    public static AtomicInteger getRequestNumber() {
+        return requestNumber;
+    }
 
     public DataSource getDataSource() {
         return dataSource;
@@ -116,25 +123,9 @@ public class DatabaseExchange {
      * Метод возвращает уникальный код запроса
      */
     public int getRequestId() {
-        try {
-            this.initDataSource();
-            Connection connection = dataSource.getConnection();
-            String sql = "select s_tkf_ws_audit.nextval as id from dual";
-            try (PreparedStatement statement = connection.prepareStatement(sql)) {
-                ResultSet rs = statement.executeQuery();
-                if (rs.next()) {
-                    int requestId = rs.getInt("id");
-                    LOGGER.trace("[{}] Next request id received", requestId);
-                    return requestId;
-                }
-            }
-        } catch (SQLException e) {
-            LOGGER.error("Unable to get next request id:", e);
-//            throw new FwtRuntimeException("Unable to get next request id", e);
-            throw new RuntimeException("Unable to get next request id", e);
-        }
-//        throw new FwtRuntimeException("Unable to read next request id");
-        throw new RuntimeException("Unable to get next request id");
+        int requestId = requestNumber.incrementAndGet();
+        LOGGER.trace("[{}] Next request id received", requestId);
+        return requestId;
     }
 
     /**
@@ -208,8 +199,8 @@ public class DatabaseExchange {
         initDataSource();
         String procedureName = getProcedureName(methodName);
         String sql = "{call " + procedureName + "(?,?)}";
-        try {
-            CallableStatement cstmt = dataSource.getConnection().prepareCall(sql);
+        try (Connection connection = dataSource.getConnection()) {
+            CallableStatement cstmt = connection.prepareCall(sql);
 
             Clob jsonRequestClob = dataSource.getConnection().createClob();
             jsonRequestClob.setString(1, jsonRequest);
@@ -224,6 +215,57 @@ public class DatabaseExchange {
             e.printStackTrace();
         }
 
+        return null;
+    }
+
+    public String testRequestDB() {
+        StringBuilder result = new StringBuilder();
+        String sql = "SELECT * FROM FW_VERSION_PROJECT";
+        initDataSource();
+        try (Connection connection = this.dataSource.getConnection()) {
+            Statement cstmt = connection.createStatement();
+            try (ResultSet rs = cstmt.executeQuery(sql)) {
+                while (rs.next()) {
+                    result.append("Version:" + System.getProperty("line.separator"));
+                    result.append("\tV_PROJECT:\t\t\t\t" + rs.getString(1) + System.getProperty("line.separator"));
+                    result.append("\tN_DATABASE_VER:\t\t" + rs.getInt(2) + System.getProperty("line.separator"));
+                    result.append("\tV_VERSION_STAGE:\t\t" + rs.getString(3) + System.getProperty("line.separator"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return result.toString();
+    }
+
+    public String testCallProcDB(String jsonRequest, String methodName) {
+        StringBuilder result = new StringBuilder();
+        String sql = "call " + getProcedureName(methodName) + "(?, ?)";
+        initDataSource();
+        try (Connection connection = this.dataSource.getConnection()) {
+            CallableStatement cstmt = connection.prepareCall(sql);
+            cstmt.setString(REST_API_JSON_REQUEST, jsonRequest);
+            cstmt.registerOutParameter(REST_API_JSON_RESPONSE, Types.CLOB);
+            cstmt.execute();
+            Clob resultClob = cstmt.getClob(REST_API_JSON_RESPONSE);
+            result.append(resultClob.getSubString(1, (int) resultClob.length()));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return result.toString();
+    }
+
+    public String testCallProcDB(Object bean, String methodName) {
+        try {
+            String request = new ObjectMapper().writeValueAsString(bean);
+            int requestNum = getRequestId();
+            validateBean(requestNum, bean);
+            return testCallProcDB(request, methodName);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
@@ -274,10 +316,15 @@ public class DatabaseExchange {
         }
     }
 */
-
     private String getProcedureName(String methodName) {
-        String packageName = this.getClass().getPackage().getName();
-        return packageName + PROCEDURE_NAME_DELIMITER + methodName;
+        String result = "";
+
+//        String packageName = this.getClass().getPackage().getName();
+//        result =  packageName + PROCEDURE_NAME_DELIMITER + methodName;
+
+        result = "TEST_TRASH_PACK." + methodName;
+
+        return result;
     }
 
 }
