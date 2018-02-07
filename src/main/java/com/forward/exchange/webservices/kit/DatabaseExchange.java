@@ -40,7 +40,7 @@ public class DatabaseExchange {
     private static final String REST_API_JSON_RESPONSE = "pRESPONSE_JSON";
     private static final String REST_API_JSON_REQUEST = "pREQUEST_JSON";
     private static final String REST_API_CALL_CONTEXT = "pCONTEXT";
-    public static final String DB_PACKAGE_NAME = "DB_PACKAGE_NAME";
+    public static final String DB_PACKAGE_NAME = "TEST_TRASH_PACK";
 
     private DataSource dataSource;
 
