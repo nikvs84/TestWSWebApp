@@ -6,15 +6,15 @@ import java.sql.SQLException;
 import java.sql.SQLInput;
 import java.sql.SQLOutput;
 
-public class WebRequestSQL implements SQLData, Serializable {
-	public static final String TYPE_NAME = "T_TEST_TRASH_WS";
+public class SuzaWebRequestSQL implements SQLData, Serializable {
+	public static final String TYPE_NAME = "T_SUZA_WEB_REQUEST";
 
 	/**
 	 *
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private Integer managerId;
+	private Integer userId;
 	private String webMethod;
 	private Integer requestNum;
 
@@ -23,12 +23,12 @@ public class WebRequestSQL implements SQLData, Serializable {
 		return TYPE_NAME;
 	}
 
-	public Integer getManagerId() {
-		return managerId;
+	public Integer getUserId() {
+		return userId;
 	}
 
-	public void setManagerId(Integer managerId) {
-		this.managerId = managerId;
+	public void setUserId(Integer userId) {
+		this.userId = userId;
 	}
 
 	public String getWebMethod() {
@@ -49,22 +49,22 @@ public class WebRequestSQL implements SQLData, Serializable {
 
 	@Override
 	public void readSQL(SQLInput stream, String typeName) throws SQLException {
-		managerId = stream.readInt();
+		userId = stream.readInt();
 		webMethod = stream.readString();
 		requestNum = stream.readInt();
 	}
 
 	@Override
 	public void writeSQL(SQLOutput stream) throws SQLException {
-		stream.writeInt(managerId);
+		stream.writeInt(userId);
 		stream.writeString(webMethod);
 		stream.writeInt(requestNum);
 	}
 
 	@Override
 	public String toString() {
-		return "WebRequestSQL{" +
-				"managerId=" + managerId +
+		return "SuzaWebRequestSQL{" +
+				"userId=" + userId +
 				", webMethod='" + webMethod + '\'' +
 				", requestNum=" + requestNum +
 				'}';

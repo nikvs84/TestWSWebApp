@@ -2,7 +2,6 @@ package com.forward.exchange.webservices.kit;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,13 +10,9 @@ import javax.naming.NamingException;
 import javax.sql.DataSource;
 import javax.validation.Validation;
 import javax.validation.Validator;
-import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.security.Principal;
 import java.sql.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -158,8 +153,8 @@ public class DatabaseExchange {
         initDataSource();
         try (Connection connection = this.dataSource.getConnection()) {
 
-            WebRequestSQL context = new WebRequestSQL();
-            context.setManagerId(getUserId(securityContext));
+            SuzaWebRequestSQL context = new SuzaWebRequestSQL();
+            context.setUserId(getUserId(securityContext));
             context.setWebMethod(methodName);
             context.setRequestNum(requestNum);
 
@@ -211,24 +206,18 @@ public class DatabaseExchange {
 
     private String getProcedureName(String methodName) {
         String result = "";
+        String packageName = "TEST_TRASH_PACK.";
+        result = packageName + methodName;
 
 //        String packageName = this.getClass().getPackage().getName();
 //        result =  packageName + PROCEDURE_NAME_DELIMITER + methodName;
-
-        result = "TEST_TRASH_PACK." + methodName;
 
         return result;
     }
 
     private int getUserId(SecurityContext securityContext) throws SQLException {
-/*
-        String userName;
-        Principal principal = securityContext.getUserPrincipal();
-        userName = principal.getName();
-
+        String userName = securityContext.getUserPrincipal().getName();
         return getUserId(userName);
-*/
-        return 2;
     }
 
     /**
