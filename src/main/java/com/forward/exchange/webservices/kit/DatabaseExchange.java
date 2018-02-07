@@ -40,6 +40,7 @@ public class DatabaseExchange {
     private static final String REST_API_JSON_RESPONSE = "pRESPONSE_JSON";
     private static final String REST_API_JSON_REQUEST = "pREQUEST_JSON";
     private static final String REST_API_CALL_CONTEXT = "pCONTEXT";
+    public static final String DB_PACKAGE_NAME = "DB_PACKAGE_NAME";
 
     private DataSource dataSource;
 
@@ -206,8 +207,7 @@ public class DatabaseExchange {
 
     private String getProcedureName(String methodName) {
         String result = "";
-        String packageName = "TEST_TRASH_PACK.";
-        result = packageName + methodName;
+        result = DB_PACKAGE_NAME + "." + methodName;
 
 //        String packageName = this.getClass().getPackage().getName();
 //        result =  packageName + PROCEDURE_NAME_DELIMITER + methodName;
