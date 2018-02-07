@@ -2,7 +2,7 @@ apply plugin: 'java'
 apply plugin: 'war'
 
 
-/*
+
 sourceSets {
 	main {
 		java {
@@ -10,7 +10,11 @@ sourceSets {
 		}
 	}
 }
-*/
+
+
+repositories {
+	mavenCentral()
+}
 
 dependencies {
 	compile 'org.glassfish.jersey:jersey-bom:2.16'
