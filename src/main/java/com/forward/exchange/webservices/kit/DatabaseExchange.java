@@ -12,9 +12,12 @@ import javax.sql.DataSource;
 import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.security.Principal;
 import java.sql.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -44,6 +47,9 @@ public class DatabaseExchange {
     private static final String REST_API_CALL_CONTEXT = "pCONTEXT";
 
     private DataSource dataSource;
+
+    @Context
+    SecurityContext securityContext;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseExchange.class);
 
@@ -128,33 +134,6 @@ public class DatabaseExchange {
         return requestId;
     }
 
-    /**
-     * Метод выполняет общую обработку запроса вебсервиса
-     *
-     * @param methodName
-     * @return
-     */
-    public Response processJsonRequest(Object bean, ContainerRequestContext requestContext, String methodName) {
-        final int requestNum = this.getRequestId();
-
-        try {
-            LOGGER.info("[{}] >>> Request {}", requestNum, methodName);
-
-            String jsonResponse = this.processJsonRequestDirect(requestNum, bean, requestContext, methodName);
-
-            //Отлогируем возврат
-            if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace("[{}] <<< Response: {}", requestNum, jsonResponse);
-            } else {
-                LOGGER.info("[{}] <<< Response", requestNum);
-            }
-
-            return Response.ok().entity(new ByteArrayInputStream(jsonResponse.getBytes())).build();
-        } catch (Exception e) {
-            return this.processRestApiError(requestNum, e);
-        }
-    }
-
     private Response processRestApiError(int requestNum, Exception e) {
         String jsonResponse = "";
         try {
@@ -165,87 +144,28 @@ public class DatabaseExchange {
         return Response.serverError().entity(jsonResponse).build();
     }
 
+
     /**
-     * Метод вычитывает json из запроса и выполняет в БД
+     * Метод вызова процедуры в БД
+     * @param jsonRequest JSON
+     * @param methodName название процедуры в БД
+     * @param requestNum код запроса
+     * @return JSON
      */
-    public String processJsonRequestDirect(final int requestNum, Object bean, ContainerRequestContext requestContext,
-                                           String methodName) throws Exception {
-		/*
-			Валидируем полученный bean
-		 */
-        this.validateBean(requestNum, bean);
-
-		/*
-			Вычитаем JSON из запроса
-		 */
-        InputStream is = requestContext.getEntityStream();
-        is.reset();
-        final String jsonRequest = IOUtils.toString(is, DEFAULT_UTF_ENCODING);
-
-        //Отлогируем взвлечение
-        if (LOGGER.isTraceEnabled()) {
-            LOGGER.trace("[{}] Json readed from request: {}", requestNum, jsonRequest);
-        } else {
-            LOGGER.debug("[{}] Json readed from request", requestNum);
-        }
-
-        /*
-         * Вызываем БД
-         */
-        return this.processJsonRequestDb(requestNum, jsonRequest, methodName);
-    }
-
-    private String processJsonRequestDb(int requestNum, String jsonRequest, String methodName) {
-        initDataSource();
-        String procedureName = getProcedureName(methodName);
-        String sql = "{call " + procedureName + "(?,?)}";
-        try (Connection connection = dataSource.getConnection()) {
-            CallableStatement cstmt = connection.prepareCall(sql);
-
-            Clob jsonRequestClob = dataSource.getConnection().createClob();
-            jsonRequestClob.setString(1, jsonRequest);
-            cstmt.setClob(REST_API_JSON_REQUEST, jsonRequestClob);
-            cstmt.registerOutParameter(REST_API_JSON_RESPONSE, Types.CLOB);
-
-            cstmt.execute();
-
-            Clob result = cstmt.getClob(REST_API_JSON_RESPONSE);
-            return result.getSubString(1, (int) result.length());
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return null;
-    }
-
-    public String testRequestDB() {
+    public String callProcDB(String jsonRequest, String methodName, int requestNum) {
         StringBuilder result = new StringBuilder();
-        String sql = "SELECT * FROM FW_VERSION_PROJECT";
+        String sql = "call " + getProcedureName(methodName) + "(?, ?, ?)";
         initDataSource();
         try (Connection connection = this.dataSource.getConnection()) {
-            Statement cstmt = connection.createStatement();
-            try (ResultSet rs = cstmt.executeQuery(sql)) {
-                while (rs.next()) {
-                    result.append("Version:" + System.getProperty("line.separator"));
-                    result.append("\tV_PROJECT:\t\t\t\t" + rs.getString(1) + System.getProperty("line.separator"));
-                    result.append("\tN_DATABASE_VER:\t\t" + rs.getInt(2) + System.getProperty("line.separator"));
-                    result.append("\tV_VERSION_STAGE:\t\t" + rs.getString(3) + System.getProperty("line.separator"));
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
 
-        return result.toString();
-    }
+            WebRequestSQL context = new WebRequestSQL();
+            context.setManagerId(getUserId(securityContext));
+            context.setWebMethod(methodName);
+            context.setRequestNum(requestNum);
 
-    public String testCallProcDB(String jsonRequest, String methodName) {
-        StringBuilder result = new StringBuilder();
-        String sql = "call " + getProcedureName(methodName) + "(?, ?)";
-        initDataSource();
-        try (Connection connection = this.dataSource.getConnection()) {
             CallableStatement cstmt = connection.prepareCall(sql);
             cstmt.setString(REST_API_JSON_REQUEST, jsonRequest);
+            cstmt.setObject(REST_API_CALL_CONTEXT, context);
             cstmt.registerOutParameter(REST_API_JSON_RESPONSE, Types.CLOB);
             cstmt.execute();
             Clob resultClob = cstmt.getClob(REST_API_JSON_RESPONSE);
@@ -257,65 +177,38 @@ public class DatabaseExchange {
         return result.toString();
     }
 
-    public String testCallProcDB(Object bean, String methodName) {
-        try {
-            String request = new ObjectMapper().writeValueAsString(bean);
-            int requestNum = getRequestId();
-            validateBean(requestNum, bean);
-            return testCallProcDB(request, methodName);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
     /**
      * Метод прямой обработки запроса в БД
      */
-/*
-        public String processJsonRequestDb(final int requestNum, String jsonRequest,
-                                       String methodName) throws Exception {
+    public Response execute(String jsonRequest, Class<?> clazz, String methodName) {
+        int requestNum = getRequestId();
 
-		*//*
-			Должны получить валидный json
-		 *//*
-        if (jsonRequest == null) {
-            throw new IllegalArgumentException("Json is null");
+        //Отлогируем взвлечение
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace("[{}] Json readed from request: {}", requestNum, jsonRequest);
+        } else {
+            LOGGER.debug("[{}] Json readed from request", requestNum);
         }
-
-        //TODO - выкинуть
-        this.initDataSource();
-
-		*//*
-			Определим процедуру, которую будем вызывать
-		 *//*
-        final String procedure = this.getProcedureName(methodName);
-        LOGGER.debug("[{}] Method '{}' is db procedure: {}", requestNum, methodName, procedure);
-
-		*//*
-			Подготовим контекст вызова
-		 *//*
-        final TcsWebRequestSQL context = new TcsWebRequestSQL();
-        context.setManagerId(this.getUser());
-        context.setWebMethod(methodName);
-        context.setRequestNum(requestNum);
-
-		*//*
-			Выполняем запрос в БД
-		*//*
         try {
-            LOGGER.debug("[{}] {}", requestNum, context);
-            return this.executeOnDbImpl(requestNum, procedure, jsonRequest, context);
-        } catch (SQLException sqlEx) {
-            LOGGER.warn("[{}] Sql error received: {}", requestNum, sqlEx.getErrorCode());
-            if (DBQueryLite.isPackageStateInvalid(sqlEx)) {
-                LOGGER.warn("[{}] Resend {}", requestNum, context);
-                return this.executeOnDbImpl(requestNum, procedure, jsonRequest, context);
+            Object bean = new ObjectMapper().readValue(jsonRequest, clazz);
+            validateBean(requestNum, bean);
+
+            String jsonResponse = this.callProcDB(jsonRequest, methodName, requestNum);
+
+            //Отлогируем возврат
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("[{}] <<< Response: {}", requestNum, jsonResponse);
+            } else {
+                LOGGER.info("[{}] <<< Response", requestNum);
             }
-            throw sqlEx;
+
+            return Response.ok().entity(jsonResponse).build();
+        } catch (Exception e) {
+            return this.processRestApiError(requestNum, e);
         }
     }
-*/
+
+
     private String getProcedureName(String methodName) {
         String result = "";
 
@@ -325,6 +218,42 @@ public class DatabaseExchange {
         result = "TEST_TRASH_PACK." + methodName;
 
         return result;
+    }
+
+    private int getUserId(SecurityContext securityContext) throws SQLException {
+/*
+        String userName;
+        Principal principal = securityContext.getUserPrincipal();
+        userName = principal.getName();
+
+        return getUserId(userName);
+*/
+        return 2;
+    }
+
+    /**
+     * Получение кода пользователя
+     *
+     * @param username
+     * @return
+     * @throws SQLException
+     */
+    private int getUserId(String username) throws SQLException {
+        assert username != null : "query cannot be empty";
+        initDataSource();
+        try (Connection connection = dataSource.getConnection()) {
+            String sql = "select ID_USER from CI_USERS where V_USERNAME = ?";
+            PreparedStatement stmt = connection.prepareStatement(sql);
+            stmt.setString(1, username);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                int id = rs.getInt(1);
+                LOGGER.trace("User {} has ID = {}", username, id);
+                return id;
+            } else {
+                throw new SQLException("Username '" + username + "' is unknown.");
+            }
+        }
     }
 
 }
