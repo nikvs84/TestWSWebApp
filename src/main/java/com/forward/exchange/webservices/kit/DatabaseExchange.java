@@ -40,7 +40,7 @@ public class DatabaseExchange {
     private static final String REST_API_JSON_RESPONSE = "pRESPONSE_JSON";
     private static final String REST_API_JSON_REQUEST = "pREQUEST_JSON";
     private static final String REST_API_CALL_CONTEXT = "pCONTEXT";
-    public static final String DB_PACKAGE_NAME = "TEST_TRASH_PACK";
+    public static final String DB_PACKAGE_NAME = "ESUZA_WS_RESTful";
 
     private DataSource dataSource;
 
@@ -149,7 +149,7 @@ public class DatabaseExchange {
      * @return JSON
      */
     public String callProcDB(String jsonRequest, String methodName, int requestNum) {
-        StringBuilder result = new StringBuilder();
+        String result = null;
         String sql = "call " + getProcedureName(methodName) + "(?, ?, ?)";
         initDataSource();
         try (Connection connection = this.dataSource.getConnection()) {
@@ -165,7 +165,7 @@ public class DatabaseExchange {
             cstmt.registerOutParameter(REST_API_JSON_RESPONSE, Types.CLOB);
             cstmt.execute();
             Clob resultClob = cstmt.getClob(REST_API_JSON_RESPONSE);
-            result.append(resultClob.getSubString(1, (int) resultClob.length()));
+            result = resultClob.getSubString(1, (int) resultClob.length());
         } catch (SQLException e) {
             e.printStackTrace();
         }
